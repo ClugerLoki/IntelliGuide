@@ -43,8 +43,9 @@ The application follows a modern full-stack architecture with clear separation b
 - **Categories**: Predefined recommendation categories with specialized AI prompts
 
 ### Storage Strategy
-- **Database**: PostgreSQL with Drizzle ORM for all data persistence
-- **Session Management**: Chat sessions and message history stored in database
+- **Primary**: Firebase Firestore for cloud-based data persistence
+- **Fallback**: In-memory storage when Firebase is unavailable
+- **Session Management**: Chat sessions and message history stored persistently
 - **User Management**: Support for authenticated users and guest sessions
 - **Guest Support**: Full functionality without requiring user accounts
 
@@ -108,10 +109,11 @@ The architecture is designed for rapid development while maintaining production-
 ### January 31, 2025
 - **Core Application Completed**: Built full-stack IntelliGuide AI recommendation chatbot
 - **AI Integration**: Implemented Google Gemini API with category-specific conversation prompts
-- **Database Integration**: Added PostgreSQL database with Drizzle ORM for persistent storage
+- **Firebase Integration**: Added Firebase Firestore support with fallback to in-memory storage
 - **Voice Features**: Added speech-to-text input and text-to-speech output capabilities
 - **User Interface**: Created responsive design with welcome page, category selection, and chat interface  
 - **Speech Recognition**: Enhanced with robust error handling and browser compatibility (works best in Chrome/Edge)
 - **Guest Mode**: Full functionality available without requiring user accounts
 - **Categories**: Implemented 6 recommendation categories - fashion, health, travel, books, movies, music
-- **Data Persistence**: Chat sessions and messages now saved to database for conversation continuity
+- **Data Persistence**: Smart storage system with Firebase primary and memory fallback
+- **Flexible Storage**: App works with Firebase Firestore, PostgreSQL, or in-memory depending on configuration
