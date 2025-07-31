@@ -1,5 +1,6 @@
-import { type User, type InsertUser, type ChatSession, type InsertChatSession, type Message } from "@shared/schema";
-import { randomUUID } from "crypto";
+import { type User, type InsertUser, type ChatSession, type InsertChatSession, type Message, users, chatSessions } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -14,75 +15,62 @@ export interface IStorage {
   getUserChatSessions(userId: string): Promise<ChatSession[]>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-  private chatSessions: Map<string, ChatSession>;
-
-  constructor() {
-    this.users = new Map();
-    this.chatSessions = new Map();
-  }
-
+export class DatabaseStorage implements IStorage {
   async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(user => user.email === email);
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { 
-      id,
-      name: insertUser.name || null,
-      email: insertUser.email || null,
-      authProvider: insertUser.authProvider || "guest",
-      createdAt: new Date(),
-    };
-    this.users.set(id, user);
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
     return user;
   }
 
   async getChatSession(id: string): Promise<ChatSession | undefined> {
-    return this.chatSessions.get(id);
+    const [session] = await db.select().from(chatSessions).where(eq(chatSessions.id, id));
+    return session || undefined;
   }
 
   async createChatSession(insertSession: InsertChatSession): Promise<ChatSession> {
-    const id = randomUUID();
-    const session: ChatSession = {
-      id,
-      userId: insertSession.userId || null,
-      category: insertSession.category,
-      messages: insertSession.messages || [],
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.chatSessions.set(id, session);
+    const [session] = await db
+      .insert(chatSessions)
+      .values(insertSession)
+      .returning();
     return session;
   }
 
   async updateChatSession(id: string, messages: Message[]): Promise<ChatSession> {
-    const session = this.chatSessions.get(id);
+    const [session] = await db
+      .update(chatSessions)
+      .set({ 
+        messages: messages as any,
+        updatedAt: new Date()
+      })
+      .where(eq(chatSessions.id, id))
+      .returning();
+    
     if (!session) {
       throw new Error("Chat session not found");
     }
     
-    const updatedSession: ChatSession = {
-      ...session,
-      messages,
-      updatedAt: new Date(),
-    };
-    
-    this.chatSessions.set(id, updatedSession);
-    return updatedSession;
+    return session;
   }
 
   async getUserChatSessions(userId: string): Promise<ChatSession[]> {
-    return Array.from(this.chatSessions.values())
-      .filter(session => session.userId === userId)
-      .sort((a, b) => (b.updatedAt?.getTime() || 0) - (a.updatedAt?.getTime() || 0));
+    return await db
+      .select()
+      .from(chatSessions)
+      .where(eq(chatSessions.userId, userId))
+      .orderBy(chatSessions.updatedAt);
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();

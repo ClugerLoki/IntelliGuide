@@ -43,9 +43,9 @@ The application follows a modern full-stack architecture with clear separation b
 - **Categories**: Predefined recommendation categories with specialized AI prompts
 
 ### Storage Strategy
-- **Development**: In-memory storage for rapid prototyping
-- **Production Ready**: Drizzle ORM with PostgreSQL schema defined
-- **Session Management**: Chat session persistence with message history
+- **Database**: PostgreSQL with Drizzle ORM for all data persistence
+- **Session Management**: Chat sessions and message history stored in database
+- **User Management**: Support for authenticated users and guest sessions
 - **Guest Support**: Full functionality without requiring user accounts
 
 ### UI/UX Design
@@ -86,7 +86,7 @@ The application follows a modern full-stack architecture with clear separation b
 
 ### Development Environment
 - **Local Development**: Vite dev server with hot reload
-- **Database**: In-memory storage for rapid iteration
+- **Database**: PostgreSQL with Drizzle ORM for persistent data storage
 - **API Integration**: Direct Gemini API calls with environment variables
 
 ### Production Configuration
@@ -108,8 +108,10 @@ The architecture is designed for rapid development while maintaining production-
 ### January 31, 2025
 - **Core Application Completed**: Built full-stack IntelliGuide AI recommendation chatbot
 - **AI Integration**: Implemented Google Gemini API with category-specific conversation prompts
+- **Database Integration**: Added PostgreSQL database with Drizzle ORM for persistent storage
 - **Voice Features**: Added speech-to-text input and text-to-speech output capabilities
 - **User Interface**: Created responsive design with welcome page, category selection, and chat interface  
 - **Speech Recognition**: Enhanced with robust error handling and browser compatibility (works best in Chrome/Edge)
 - **Guest Mode**: Full functionality available without requiring user accounts
 - **Categories**: Implemented 6 recommendation categories - fashion, health, travel, books, movies, music
+- **Data Persistence**: Chat sessions and messages now saved to database for conversation continuity
