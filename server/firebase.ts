@@ -25,17 +25,30 @@ if (!getApps().length) {
       // Clean and format the private key properly
       let privateKey = process.env.FIREBASE_PRIVATE_KEY!;
       
-      // Handle different possible formats of the private key
-      if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
-        privateKey = privateKey.slice(1, -1);
-      }
+      // Remove any surrounding quotes
+      privateKey = privateKey.replace(/^["']|["']$/g, '');
       
       // Replace escaped newlines with actual newlines
       privateKey = privateKey.replace(/\\n/g, '\n');
       
-      // Validate PEM format
+      // If the key doesn't have PEM headers, it means only the key content was provided
+      // We need to add the headers and format it properly
+      if (!privateKey.includes('-----BEGIN PRIVATE KEY-----')) {
+        // Key content only - add headers and format
+        const keyContent = privateKey.trim();
+        privateKey = `-----BEGIN PRIVATE KEY-----\n${keyContent}\n-----END PRIVATE KEY-----`;
+      } else {
+        // Key has headers but might need formatting
+        privateKey = privateKey
+          .replace('-----BEGIN PRIVATE KEY-----', '-----BEGIN PRIVATE KEY-----\n')
+          .replace('-----END PRIVATE KEY-----', '\n-----END PRIVATE KEY-----')
+          .replace(/\n\n+/g, '\n'); // Remove multiple newlines
+      }
+      
+      // Final validation
       if (!privateKey.includes('-----BEGIN PRIVATE KEY-----') || !privateKey.includes('-----END PRIVATE KEY-----')) {
-        throw new Error('Firebase private key must be in proper PEM format with BEGIN and END markers');
+        console.log('Unable to format private key. Key preview:', privateKey.substring(0, 100) + '...');
+        throw new Error('Could not create valid PEM format from provided private key');
       }
 
       const firebaseConfig = {
