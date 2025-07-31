@@ -23,10 +23,21 @@ export default function VoiceRecorder({ isRecording, onToggleRecording }: VoiceR
       </Button>
       
       {isRecording && (
-        <div className="mt-2 flex items-center space-x-2 text-primary">
-          <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-          <span className="text-xs font-medium">Recording...</span>
-          <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+        <div className="mt-2 flex flex-col items-center space-y-1">
+          <div className="flex items-center space-x-2 text-red-500">
+            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+            <span className="text-xs font-medium">Listening...</span>
+            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+          </div>
+          <div className="text-xs text-gray-500 text-center max-w-32">
+            Speak now, then click again to stop
+          </div>
+        </div>
+      )}
+      
+      {!isRecording && (
+        <div className="mt-1 text-xs text-gray-400 text-center max-w-32">
+          Voice input (Chrome/Edge recommended)
         </div>
       )}
     </div>

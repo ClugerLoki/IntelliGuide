@@ -102,3 +102,14 @@ The application follows a modern full-stack architecture with clear separation b
 - **Caching**: TanStack Query provides client-side caching
 
 The architecture is designed for rapid development while maintaining production-ready scalability. The modular design allows for easy feature additions and service integrations.
+
+## Recent Changes
+
+### January 31, 2025
+- **Core Application Completed**: Built full-stack IntelliGuide AI recommendation chatbot
+- **AI Integration**: Implemented Google Gemini API with category-specific conversation prompts
+- **Voice Features**: Added speech-to-text input and text-to-speech output capabilities
+- **User Interface**: Created responsive design with welcome page, category selection, and chat interface  
+- **Speech Recognition**: Enhanced with robust error handling and browser compatibility (works best in Chrome/Edge)
+- **Guest Mode**: Full functionality available without requiring user accounts
+- **Categories**: Implemented 6 recommendation categories - fashion, health, travel, books, movies, music
