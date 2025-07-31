@@ -7,6 +7,7 @@ import { Bot, ArrowLeft, Volume2, MoreVertical, Mic, Send } from "lucide-react";
 import { categories } from "@/lib/categories";
 import { useChat } from "@/hooks/use-chat";
 import { useSpeech } from "@/hooks/use-speech";
+import { useSpeechAlternative } from "@/hooks/use-speech-alternative";
 import MessageBubble from "@/components/chat/message-bubble";
 import TypingIndicator from "@/components/chat/typing-indicator";
 import VoiceRecorder from "@/components/chat/voice-recorder";
@@ -29,14 +30,22 @@ export default function ChatPage() {
     setShowRecommendations 
   } = useChat((params?.category as any) || 'fashion');
   
+  // Try the original speech hook first, fallback to alternative
+  const originalSpeech = useSpeech();
+  const alternativeSpeech = useSpeechAlternative();
+  
+  // Use alternative if original doesn't support speech or fails
+  const speechHook = originalSpeech.isSpeechSupported ? originalSpeech : alternativeSpeech;
+  
   const { 
     isVoiceEnabled, 
     toggleVoice, 
     isRecording, 
     startRecording, 
     stopRecording, 
-    speak 
-  } = useSpeech();
+    speak,
+    isSpeechSupported
+  } = speechHook;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -133,6 +142,7 @@ export default function ChatPage() {
               <VoiceRecorder
                 isRecording={isRecording}
                 onToggleRecording={handleVoiceRecording}
+                isSpeechSupported={isSpeechSupported}
               />
               
               <div className="flex-1 relative">

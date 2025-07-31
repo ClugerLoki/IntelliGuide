@@ -1,5 +1,5 @@
 import { type User, type InsertUser, type ChatSession, type InsertChatSession, type Message } from "@shared/schema";
-import { firestore, isFirebaseEnabled } from "./firebase";
+import { firestore, isFirebaseEnabled, initializeFirebase } from "./firebase";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -91,18 +91,30 @@ export class FirebaseStorage implements IStorage {
   async createChatSession(insertSession: InsertChatSession): Promise<ChatSession> {
     try {
       const id = randomUUID();
-      const sessionData = {
-        ...insertSession,
+      
+      // Create session data, ensuring no undefined values
+      const sessionData: any = {
+        category: insertSession.category,
         messages: insertSession.messages || [],
         createdAt: new Date(),
         updatedAt: new Date(),
       };
       
-      await this.chatSessionsCollection.doc(id).set(sessionData);
+      // Only add userId if it's not undefined or null
+      if (insertSession.userId !== undefined && insertSession.userId !== null) {
+        sessionData.userId = insertSession.userId;
+      }
+      
+      // Remove any undefined values from the data before saving
+      const cleanData = Object.fromEntries(
+        Object.entries(sessionData).filter(([_, value]) => value !== undefined)
+      );
+      
+      await this.chatSessionsCollection.doc(id).set(cleanData);
       
       return {
         id,
-        ...sessionData,
+        ...cleanData,
       } as ChatSession;
     } catch (error) {
       console.error('Error creating chat session:', error);
@@ -235,6 +247,9 @@ export class MemStorage implements IStorage {
       .sort((a, b) => (b.updatedAt?.getTime() || 0) - (a.updatedAt?.getTime() || 0));
   }
 }
+
+// Initialize Firebase first
+initializeFirebase();
 
 // Use Firebase if available, otherwise fall back to in-memory storage
 export const storage = isFirebaseEnabled && firestore 

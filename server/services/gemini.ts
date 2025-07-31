@@ -1,7 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
 import { type Message, type Category } from "@shared/schema";
+import { config } from "../../config.js";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+const ai = new GoogleGenAI({ apiKey: config.GEMINI_API_KEY });
 
 interface RecommendationResponse {
   message: string;

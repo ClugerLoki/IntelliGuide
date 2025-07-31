@@ -4,18 +4,22 @@ import { Mic } from "lucide-react";
 interface VoiceRecorderProps {
   isRecording: boolean;
   onToggleRecording: () => void;
+  isSpeechSupported?: boolean;
 }
 
-export default function VoiceRecorder({ isRecording, onToggleRecording }: VoiceRecorderProps) {
+export default function VoiceRecorder({ isRecording, onToggleRecording, isSpeechSupported = true }: VoiceRecorderProps) {
   return (
     <div className="flex flex-col items-center">
       <Button
         variant="outline"
         size="sm"
         onClick={onToggleRecording}
+        disabled={!isSpeechSupported}
         className={`p-3 rounded-xl border transition-colors ${
           isRecording 
             ? 'border-red-500 text-red-500 bg-red-50' 
+            : !isSpeechSupported
+            ? 'border-gray-200 text-gray-400 cursor-not-allowed'
             : 'border-gray-300 text-gray-600 hover:border-primary hover:text-primary'
         }`}
       >
@@ -37,7 +41,10 @@ export default function VoiceRecorder({ isRecording, onToggleRecording }: VoiceR
       
       {!isRecording && (
         <div className="mt-1 text-xs text-gray-400 text-center max-w-32">
-          Voice input (Chrome/Edge recommended)
+          {isSpeechSupported 
+            ? "Voice input (Chrome/Edge recommended)" 
+            : "Voice input not supported in this browser"
+          }
         </div>
       )}
     </div>

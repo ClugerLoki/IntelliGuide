@@ -29,6 +29,8 @@ export default defineConfig({
     emptyOutDir: true,
   },
   server: {
+    https: true, // Enable HTTPS for microphone access
+    host: true,
     fs: {
       strict: true,
       deny: ["**/.*"],

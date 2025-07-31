@@ -12,6 +12,9 @@ export function useSpeech() {
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef<any>(null);
+  
+  // Check if speech recognition is supported
+  const isSpeechSupported = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
 
   const toggleVoice = useCallback(() => {
     setIsVoiceEnabled(prev => !prev);
@@ -28,8 +31,12 @@ export function useSpeech() {
   }, [isVoiceEnabled]);
 
   const startRecording = useCallback((onResult: (transcript: string) => void) => {
+    console.log('Starting voice recording...');
+    console.log('Speech recognition supported:', isSpeechSupported);
+    
     // Check for permissions first
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      console.log('Requesting microphone permission...');
       navigator.mediaDevices.getUserMedia({ audio: true })
         .then(() => {
           console.log('Microphone access granted');
@@ -40,12 +47,14 @@ export function useSpeech() {
           alert('Please allow microphone access to use voice recording. Check your browser permissions and try again.');
         });
     } else {
+      console.log('getUserMedia not available, trying speech recognition directly');
       initializeSpeechRecognition(onResult);
     }
   }, []);
 
   const initializeSpeechRecognition = useCallback((onResult: (transcript: string) => void) => {
     if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+      console.log('Web Speech API not supported, falling back to alternative input');
       alert('Voice recording requires Chrome, Edge, or Safari. Please use a supported browser.');
       return;
     }
@@ -65,20 +74,53 @@ export function useSpeech() {
       setIsRecording(true);
       hasResult = false;
       console.log('Speech recognition started - please speak now');
+      console.log('Recognition settings:', {
+        continuous: recognition.continuous,
+        interimResults: recognition.interimResults,
+        lang: recognition.lang,
+        maxAlternatives: recognition.maxAlternatives
+      });
+      
+      // Add a timeout in case speech recognition doesn't work
+      setTimeout(() => {
+        if (isRecording && !hasResult) {
+          console.log('Speech recognition timeout - stopping recording');
+          recognition.stop();
+        }
+      }, 10000); // 10 second timeout
     };
 
     recognition.onresult = (event: any) => {
+      console.log('Speech recognition result event:', event);
+      console.log('Results length:', event.results.length);
+      
       if (event.results.length > 0) {
-        const transcript = event.results[0][0].transcript.trim();
-        if (transcript) {
-          console.log('Speech recognized:', transcript);
-          hasResult = true;
-          onResult(transcript);
+        const result = event.results[0];
+        console.log('First result:', result);
+        
+        if (result.length > 0) {
+          const transcript = result[0].transcript.trim();
+          console.log('Raw transcript:', transcript);
+          
+          if (transcript) {
+            console.log('Speech recognized:', transcript);
+            hasResult = true;
+            onResult(transcript);
+            // Stop recording after getting a result
+            recognition.stop();
+          } else {
+            console.log('Empty transcript received');
+          }
+        } else {
+          console.log('No transcript in result');
         }
+      } else {
+        console.log('No results in speech recognition event');
       }
     };
 
     recognition.onend = () => {
+      console.log('Speech recognition ended');
       setIsRecording(false);
       if (!hasResult) {
         console.log('No speech detected during recording');
@@ -103,6 +145,12 @@ export function useSpeech() {
         case 'service-not-allowed':
           console.log('Speech service not available - this can happen in some hosting environments');
           break;
+        case 'aborted':
+          console.log('Speech recognition was aborted');
+          break;
+        case 'audio-capture':
+          console.log('Audio capture error - check microphone permissions');
+          break;
         default:
           console.log(`Speech recognition issue: ${event.error}`);
       }
@@ -115,7 +163,8 @@ export function useSpeech() {
     } catch (error) {
       console.error('Failed to start recognition:', error);
       setIsRecording(false);
-      alert('Could not start voice recording. Please try typing your message instead.');
+      console.log('Falling back to alternative voice input method');
+      // Don't show alert, let the alternative method handle it
     }
   }, []);
 
@@ -133,5 +182,6 @@ export function useSpeech() {
     startRecording,
     stopRecording,
     speak,
+    isSpeechSupported,
   };
 }

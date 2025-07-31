@@ -1,9 +1,18 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
 import { chatRequestSchema, messageSchema, type Message, type Category } from "@shared/schema";
 import { generateChatResponse } from "./services/gemini";
 import { randomUUID } from "crypto";
+
+// Lazy import storage to ensure environment variables are loaded first
+let storage: any = null;
+async function getStorage() {
+  if (!storage) {
+    const { storage: storageModule } = await import("./storage.js");
+    storage = storageModule;
+  }
+  return storage;
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
@@ -16,19 +25,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let messages: Message[] = [];
       
       // Get or create chat session
+      const storageInstance = await getStorage();
       if (sessionId) {
-        session = await storage.getChatSession(sessionId);
+        session = await storageInstance.getChatSession(sessionId);
         if (session) {
           messages = Array.isArray(session.messages) ? session.messages as Message[] : [];
         }
       }
       
       if (!session) {
-        session = await storage.createChatSession({
-          userId: userId || undefined,
+        const sessionData: any = {
           category,
           messages: [],
-        });
+        };
+        
+        // Only add userId if it's not falsy
+        if (userId) {
+          sessionData.userId = userId;
+        }
+        
+        session = await storageInstance.createChatSession(sessionData);
       }
       
       // Add user message
@@ -56,7 +72,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       messages.push(aiMessage);
       
       // Update session with new messages
-      await storage.updateChatSession(session.id, messages);
+      await storageInstance.updateChatSession(session.id, messages);
       
       res.json({
         message: aiMessage,
@@ -76,7 +92,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/chat/:sessionId", async (req, res) => {
     try {
       const { sessionId } = req.params;
-      const session = await storage.getChatSession(sessionId);
+      const storageInstance = await getStorage();
+      const session = await storageInstance.getChatSession(sessionId);
       
       if (!session) {
         return res.status(404).json({ error: "Chat session not found" });
@@ -94,7 +111,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/user/:userId/chats", async (req, res) => {
     try {
       const { userId } = req.params;
-      const sessions = await storage.getUserChatSessions(userId);
+      const storageInstance = await getStorage();
+      const sessions = await storageInstance.getUserChatSessions(userId);
       
       res.json(sessions);
       
